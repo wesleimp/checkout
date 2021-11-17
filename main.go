@@ -1,12 +1,10 @@
 package main
 
 import (
-	"bufio"
-	"os"
-	"os/exec"
-	"strings"
-
 	"github.com/ktr0731/go-fuzzyfinder"
+
+	"github.com/wesleimp/checkout/internal/branch"
+	"github.com/wesleimp/checkout/internal/git"
 )
 
 type Checkout struct {
@@ -15,53 +13,22 @@ type Checkout struct {
 }
 
 func main() {
-	cmd := exec.Command("git", "reflog")
+	if !git.IsRepo() {
+		println("It's not a git repository")
+	}
 
-	stdout, err := cmd.StdoutPipe()
+	current_branch, err := git.Run("rev-parse", "--abbrev-ref", "HEAD")
 	if err != nil {
 		panic(err.Error())
 	}
 
-	stderr, err := cmd.StderrPipe()
+	branches, err := branch.Checkouts(10000)
 	if err != nil {
 		panic(err.Error())
 	}
 
-	if err := cmd.Start(); err != nil {
-		println(bufio.NewScanner(stdout).Text())
-		println(bufio.NewScanner(stderr).Text())
-		os.Exit(1)
-	}
-
-	counter := 0
-	bm := map[string]bool{}
-	scanner := bufio.NewScanner(stdout)
-	for scanner.Scan() && counter < 10000 {
-		line := scanner.Text()
-		if strings.Contains(line, "checkout: moving from") {
-			bb := strings.Split(strings.Split(line, "checkout: moving from")[1], "to")
-			for _, b := range bb {
-				trimmed := strings.TrimSpace(b)
-				if trimmed != "" {
-					bm[trimmed] = true
-				}
-			}
-		}
-		counter++
-	}
-
-	if err := cmd.Wait(); err != nil {
-		panic(err.Error())
-	}
-
-	branches := []string{}
-	for b := range bm {
-		branches = append(branches, b)
-	}
-
-	if len(branches) == 1 {
-		println("No branches found")
-		os.Exit(0)
+	if !contains(branches, current_branch) {
+		branches = append(branches, current_branch)
 	}
 
 	idx, err := fuzzyfinder.Find(branches, func(i int) string {
@@ -70,6 +37,16 @@ func main() {
 	if err != nil {
 		panic(err.Error())
 	}
-	println("selected %v", idx)
 
+	println("selected branch:", branches[idx])
+}
+
+func contains(s []string, str string) bool {
+	for _, v := range s {
+		if v == str {
+			return true
+		}
+	}
+
+	return false
 }
