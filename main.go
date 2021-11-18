@@ -1,30 +1,30 @@
 package main
 
 import (
+	"os"
+
 	"github.com/ktr0731/go-fuzzyfinder"
 
 	"github.com/wesleimp/checkout/internal/branch"
 	"github.com/wesleimp/checkout/internal/git"
 )
 
-type Checkout struct {
-	from string
-	to   string
-}
-
 func main() {
 	if !git.IsRepo() {
 		println("It's not a git repository")
+		os.Exit(1)
 	}
 
 	current_branch, err := git.Run("rev-parse", "--abbrev-ref", "HEAD")
 	if err != nil {
-		panic(err.Error())
+		println(err.Error())
+		os.Exit(1)
 	}
 
 	branches, err := branch.Checkouts(10000)
 	if err != nil {
-		panic(err.Error())
+		println(err.Error())
+		os.Exit(1)
 	}
 
 	if !contains(branches, current_branch) {
@@ -35,10 +35,21 @@ func main() {
 		return branches[i]
 	})
 	if err != nil {
-		panic(err.Error())
+		if err.Error() != "abort" {
+			println(err.Error())
+		}
+		os.Exit(0)
 	}
 
-	println("selected branch:", branches[idx])
+	branch := branches[idx]
+	_, err = git.Run("checkout", branch)
+	if err != nil {
+		println(err.Error())
+		os.Exit(1)
+	}
+
+	println("switched to", branch)
+	os.Exit(0)
 }
 
 func contains(s []string, str string) bool {
