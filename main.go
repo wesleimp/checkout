@@ -42,12 +42,13 @@ func main() {
 	}
 
 	branch := branches[idx]
-	_, err = git.Run("checkout", branch)
+	out, err := git.Run("checkout", branch)
 	if err != nil {
 		println(err.Error())
 		os.Exit(1)
 	}
 
+	println(out)
 	println("switched to", branch)
 	os.Exit(0)
 }
