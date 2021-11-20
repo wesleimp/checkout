@@ -6,9 +6,9 @@ Get checkouted branches from the `reflog` and create a fuzzy-finding interface
 
 ### manually
 
-Download the pre-compiled binaries from the [OSS releases page](github.com/wesleimp/checkout/releases) and copy them to the desired location.
+Download the pre-compiled binaries from the [OSS releases page](https://github.com/wesleimp/checkout/releases) and copy them to the desired location.
 
-### Compiling from source
+### compiling from source
 
 If you just want to build from source for whatever reason, follow these steps:
 
